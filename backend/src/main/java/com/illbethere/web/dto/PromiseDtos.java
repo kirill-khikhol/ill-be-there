@@ -35,7 +35,8 @@ public final class PromiseDtos {
             String locationName,
             String date,
             String slot,
-            String googleEventId
+            String googleEventId,
+            String calendarWarning
     ) {
     }
 }

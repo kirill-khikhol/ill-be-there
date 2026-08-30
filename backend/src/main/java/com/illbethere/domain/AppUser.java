@@ -25,6 +25,11 @@ public class AppUser {
     @Column(length = 2048)
     private String encryptedRefreshToken;
 
+    @Column(length = 2048)
+    private String encryptedAccessToken;
+
+    private java.time.Instant accessTokenExpiresAt;
+
     public Long getId() {
         return id;
     }
@@ -67,5 +72,26 @@ public class AppUser {
 
     public void setEncryptedRefreshToken(String encryptedRefreshToken) {
         this.encryptedRefreshToken = encryptedRefreshToken;
+    }
+
+    public String getEncryptedAccessToken() {
+        return encryptedAccessToken;
+    }
+
+    public void setEncryptedAccessToken(String encryptedAccessToken) {
+        this.encryptedAccessToken = encryptedAccessToken;
+    }
+
+    public java.time.Instant getAccessTokenExpiresAt() {
+        return accessTokenExpiresAt;
+    }
+
+    public void setAccessTokenExpiresAt(java.time.Instant accessTokenExpiresAt) {
+        this.accessTokenExpiresAt = accessTokenExpiresAt;
+    }
+
+    public boolean hasCalendarToken() {
+        return (encryptedRefreshToken != null && !encryptedRefreshToken.isBlank())
+                || (encryptedAccessToken != null && !encryptedAccessToken.isBlank());
     }
 }

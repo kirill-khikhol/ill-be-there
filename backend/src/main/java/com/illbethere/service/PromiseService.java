@@ -67,10 +67,14 @@ public class PromiseService {
                 .filter(p -> myId != null && p.getUser().getId().equals(myId))
                 .collect(Collectors.toMap(AttendancePromise::getSlotStart, p -> true, (a, b) -> true));
 
+        Instant now = Instant.now();
         List<SlotCount> slots = new ArrayList<>();
         for (int minute = 6 * 60; minute < 24 * 60; minute += 30) {
             LocalTime start = LocalTime.of(minute / 60, minute % 60);
             Instant slotStart = day.atTime(start).atZone(zone).toInstant();
+            if (slotStart.isBefore(now)) {
+                continue;
+            }
             String startLabel = start.format(SLOT);
             String endLabel = start.plusMinutes(30).format(SLOT);
             slots.add(new SlotCount(
@@ -101,6 +105,9 @@ public class PromiseService {
     public PromiseResponse create(CreatePromiseRequest request, AppUser user) {
         Location location = locationService.get(request.locationId());
         Instant slotStart = parseSlot(request.date(), request.slot());
+        if (slotStart.isBefore(Instant.now())) {
+            throw new IllegalArgumentException("Нельзя записаться на слот в прошлом");
+        }
         promiseRepository.findByUserIdAndLocationIdAndSlotStartAndStatus(
                         user.getId(), location.getId(), slotStart, PromiseStatus.ACTIVE)
                 .ifPresent(existing -> {
@@ -113,10 +120,11 @@ public class PromiseService {
         promise.setSlotStart(slotStart);
         promise.setStatus(PromiseStatus.ACTIVE);
         promise.setCreatedAt(Instant.now());
-        promise.setGoogleEventId(googleCalendarService.createEvent(user, location, slotStart));
+        GoogleCalendarService.WriteResult calendar = googleCalendarService.createEvent(user, location, slotStart);
+        promise.setGoogleEventId(calendar.eventId());
         AttendancePromise saved = promiseRepository.save(promise);
         favoriteService.touchFromPromise(location, user);
-        return toResponse(saved);
+        return toResponse(saved, calendar.warning());
     }
 
     @Transactional
@@ -137,7 +145,7 @@ public class PromiseService {
     public List<PromiseResponse> myPromises(AppUser user) {
         return promiseRepository.findByUserIdAndStatusOrderBySlotStartAsc(user.getId(), PromiseStatus.ACTIVE)
                 .stream()
-                .map(this::toResponse)
+                .map(p -> toResponse(p, null))
                 .toList();
     }
 
@@ -148,7 +156,7 @@ public class PromiseService {
                 .orElse(null);
     }
 
-    private PromiseResponse toResponse(AttendancePromise promise) {
+    private PromiseResponse toResponse(AttendancePromise promise, String calendarWarning) {
         ZonedDateTime start = promise.getSlotStart().atZone(zone());
         return new PromiseResponse(
                 promise.getId(),
@@ -156,7 +164,8 @@ public class PromiseService {
                 promise.getLocation().getName(),
                 start.toLocalDate().toString(),
                 start.toLocalTime().format(SLOT),
-                promise.getGoogleEventId());
+                promise.getGoogleEventId(),
+                calendarWarning);
     }
 
     private Instant parseSlot(String date, String slot) {

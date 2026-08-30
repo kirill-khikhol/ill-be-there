@@ -85,7 +85,7 @@ export const api = {
       `/api/locations/${locationId}/promises/details?date=${date}&slot=${encodeURIComponent(slot)}`
     ),
   createPromise: (locationId: number, date: string, slot: string) =>
-    apiFetch<{ id: number }>("/api/promises", {
+    apiFetch<{ id: number; googleEventId?: string | null; calendarWarning?: string | null }>("/api/promises", {
       method: "POST",
       body: JSON.stringify({ locationId, date, slot }),
     }),

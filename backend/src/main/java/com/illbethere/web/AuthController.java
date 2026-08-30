@@ -29,6 +29,7 @@ public class AuthController {
                 "name", user.getName() != null ? user.getName() : "",
                 "email", user.getEmail() != null ? user.getEmail() : "",
                 "avatarUrl", user.getAvatarUrl() != null ? user.getAvatarUrl() : "",
+                "hasCalendarAccess", user.hasCalendarToken(),
                 "promises", promiseService.myPromises(user));
     }
 

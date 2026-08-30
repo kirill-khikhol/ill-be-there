@@ -77,6 +77,7 @@ public class SecurityConfig {
                 .additionalParameters(params -> {
                     params.put("access_type", "offline");
                     params.put("prompt", "consent");
+                    params.put("include_granted_scopes", "true");
                 }));
         return resolver;
     }

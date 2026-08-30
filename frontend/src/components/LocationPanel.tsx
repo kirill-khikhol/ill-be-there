@@ -63,8 +63,7 @@ export default function LocationPanel({
     if (!day) {
       return [];
     }
-    const occupied = day.slots.filter((slot) => slot.count > 0 || slot.mine);
-    return occupied.length > 0 ? day.slots : day.slots.filter((_, index) => index % 2 === 0);
+    return day.slots;
   }, [day]);
 
   const toggleSlot = async (start: string) => {
@@ -85,10 +84,13 @@ export default function LocationPanel({
     setBusy(true);
     setError(null);
     try {
-      await api.createPromise(place.id, date, slot);
+      const created = await api.createPromise(place.id, date, slot);
       await load();
       setDetails(await api.slotDetails(place.id, date, slot));
       onPromiseCreated?.();
+      if (created.calendarWarning) {
+        setError(created.calendarWarning);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Не удалось обещать");
     } finally {
@@ -139,8 +141,11 @@ export default function LocationPanel({
         <input id="promise-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
       </div>
       {error && <p className="error">{error}</p>}
+      {day && visibleSlots.length === 0 && (
+        <p className="hint">На этот день уже нет слотов после текущего времени.</p>
+      )}
       <div className="slots">
-        {(visibleSlots.length ? visibleSlots : day?.slots ?? []).map((slot) => (
+        {visibleSlots.map((slot) => (
           <button
             key={slot.start}
             className={`slot ${slot.count === 0 ? "empty" : ""} ${openSlot === slot.start ? "open" : ""}`}
@@ -192,6 +197,12 @@ export default function LocationPanel({
       </div>
       {!user && googleEnabled && (
         <p className="hint">Чтобы обещание попало в Google Calendar, войдите через Google.</p>
+      )}
+      {user && user.hasCalendarAccess === false && (
+        <p className="hint">
+          Нет доступа к календарю.{" "}
+          <a href={loginHref()}>Войдите снова</a> и разрешите Google Calendar.
+        </p>
       )}
       {busy && <p className="hint">Сохраняем…</p>}
     </aside>

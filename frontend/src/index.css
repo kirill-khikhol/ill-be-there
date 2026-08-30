@@ -201,7 +201,8 @@ a.btn {
   padding: 8px;
 }
 
-.favorites-panel a {
+.favorites-panel a,
+.panel a {
   color: var(--accent);
 }
 
