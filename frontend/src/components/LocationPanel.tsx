@@ -1,0 +1,193 @@
+import { useEffect, useMemo, useState } from "react";
+import { api, loginHref } from "../api";
+import { useAuth } from "../auth";
+import type { DaySlots, Place, SlotDetails } from "../types";
+
+const CITY_LABEL: Record<Place["city"], string> = {
+  HAIFA: "Хайфа",
+  TEL_AVIV: "Тель-Авив",
+  RAMAT_GAN: "Рамат-Ган",
+  OTHER: "Другое",
+};
+
+function todayInIsrael(): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jerusalem",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+export default function LocationPanel({
+  place,
+  onClose,
+}: {
+  place: Place;
+  onClose: () => void;
+}) {
+  const { user, googleEnabled } = useAuth();
+  const [date, setDate] = useState(todayInIsrael);
+  const [day, setDay] = useState<DaySlots | null>(null);
+  const [openSlot, setOpenSlot] = useState<string | null>(null);
+  const [details, setDetails] = useState<SlotDetails | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [myIds, setMyIds] = useState<Record<string, number>>({});
+
+  const load = async () => {
+    setError(null);
+    const slots = await api.daySlots(place.id, date);
+    setDay(slots);
+    if (user) {
+      const mine = await api.myPromises();
+      const map: Record<string, number> = {};
+      mine
+        .filter((item) => item.locationId === place.id && item.date === date)
+        .forEach((item) => {
+          map[item.slot] = item.id;
+        });
+      setMyIds(map);
+    } else {
+      setMyIds({});
+    }
+  };
+
+  useEffect(() => {
+    void load().catch((err: Error) => setError(err.message));
+    setOpenSlot(null);
+    setDetails(null);
+  }, [place.id, date, user]);
+
+  const visibleSlots = useMemo(() => {
+    if (!day) {
+      return [];
+    }
+    const occupied = day.slots.filter((slot) => slot.count > 0 || slot.mine);
+    return occupied.length > 0 ? day.slots : day.slots.filter((_, index) => index % 2 === 0);
+  }, [day]);
+
+  const toggleSlot = async (start: string) => {
+    if (openSlot === start) {
+      setOpenSlot(null);
+      setDetails(null);
+      return;
+    }
+    setOpenSlot(start);
+    setDetails(await api.slotDetails(place.id, date, start));
+  };
+
+  const promise = async (slot: string) => {
+    if (!user) {
+      window.location.href = loginHref();
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await api.createPromise(place.id, date, slot);
+      await load();
+      setDetails(await api.slotDetails(place.id, date, slot));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Не удалось обещать");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const cancel = async (slot: string) => {
+    const id = myIds[slot];
+    if (!id) {
+      return;
+    }
+    setBusy(true);
+    try {
+      await api.cancelPromise(id);
+      await load();
+      if (openSlot === slot) {
+        setDetails(await api.slotDetails(place.id, date, slot));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Не удалось отменить");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <aside className="panel">
+      <div className="row">
+        <div>
+          <h2>{place.name}</h2>
+          <div className="meta">
+            {CITY_LABEL[place.city]} · спортплощадка
+            {place.source === "USER" ? " · добавлена пользователем" : ""}
+          </div>
+        </div>
+        <button className="ghost" onClick={onClose} type="button">
+          Закрыть
+        </button>
+      </div>
+      <div className="date-row">
+        <label htmlFor="promise-date">День</label>
+        <input id="promise-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+      </div>
+      {error && <p className="error">{error}</p>}
+      <div className="slots">
+        {(visibleSlots.length ? visibleSlots : day?.slots ?? []).map((slot) => (
+          <button
+            key={slot.start}
+            className={`slot ${slot.count === 0 ? "empty" : ""} ${openSlot === slot.start ? "open" : ""}`}
+            type="button"
+            onClick={() => void toggleSlot(slot.start)}
+          >
+            <strong>
+              {slot.start}–{slot.end}
+            </strong>
+            <span>{slot.count === 0 ? "пока никого" : `${slot.count} обещали прийти`}</span>
+            {myIds[slot.start] ? (
+              <span
+                className="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void cancel(slot.start);
+                }}
+              >
+                Отменить
+              </span>
+            ) : (
+              <span
+                className="btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void promise(slot.start);
+                }}
+              >
+                {user ? "Я буду" : "Войти и обещать"}
+              </span>
+            )}
+            {openSlot === slot.start && details && (
+              <div className="people">
+                {details.people.length === 0 && <span className="hint">Список пуст</span>}
+                {details.people.map((person, index) => (
+                  <div className="person" key={`${person.name}-${index}`}>
+                    {person.avatarUrl ? (
+                      <img src={person.avatarUrl} alt="" />
+                    ) : (
+                      <div className="avatar-fallback" />
+                    )}
+                    <span>{person.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </button>
+        ))}
+      </div>
+      {!user && googleEnabled && (
+        <p className="hint">Чтобы обещание попало в Google Calendar, войдите через Google.</p>
+      )}
+      {busy && <p className="hint">Сохраняем…</p>}
+    </aside>
+  );
+}

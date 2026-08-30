@@ -1,0 +1,44 @@
+services:
+  - type: web
+    name: ill-be-there-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ill-be-there-db
+          property: connectionString
+      - key: FRONTEND_ORIGIN
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: TOKEN_ENCRYPT_KEY
+        generateValue: true
+      - key: OSM_IMPORT_TOKEN
+        generateValue: true
+
+  - type: web
+    name: ill-be-there-web
+    runtime: static
+    plan: free
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false
+
+databases:
+  - name: ill-be-there-db
+    plan: free
+    databaseName: illbethere
+    user: illbethere

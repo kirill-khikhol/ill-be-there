@@ -1,0 +1,30 @@
+# Java
+backend/target/
+backend/.idea/
+*.class
+*.jar
+!backend/.mvn/wrapper/maven-wrapper.jar
+hs_err_pid*
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Env and secrets
+.env
+.env.local
+frontend/.env
+frontend/.env.local
+backend/.env
+*.pem
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Docker
+pgdata/
