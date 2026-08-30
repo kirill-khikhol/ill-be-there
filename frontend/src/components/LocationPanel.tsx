@@ -2,13 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { api, loginHref } from "../api";
 import { useAuth } from "../auth";
 import type { DaySlots, Place, SlotDetails } from "../types";
-
-const CITY_LABEL: Record<Place["city"], string> = {
-  HAIFA: "Хайфа",
-  TEL_AVIV: "Тель-Авив",
-  RAMAT_GAN: "Рамат-Ган",
-  OTHER: "Другое",
-};
+import { CITY_LABEL } from "../types";
 
 function todayInIsrael(): string {
   return new Intl.DateTimeFormat("en-CA", {
@@ -22,9 +16,15 @@ function todayInIsrael(): string {
 export default function LocationPanel({
   place,
   onClose,
+  favorited,
+  onToggleFavorite,
+  onPromiseCreated,
 }: {
   place: Place;
   onClose: () => void;
+  favorited: boolean;
+  onToggleFavorite: () => void;
+  onPromiseCreated?: () => void;
 }) {
   const { user, googleEnabled } = useAuth();
   const [date, setDate] = useState(todayInIsrael);
@@ -88,6 +88,7 @@ export default function LocationPanel({
       await api.createPromise(place.id, date, slot);
       await load();
       setDetails(await api.slotDetails(place.id, date, slot));
+      onPromiseCreated?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Не удалось обещать");
     } finally {
@@ -128,6 +129,11 @@ export default function LocationPanel({
           Закрыть
         </button>
       </div>
+      {user && (
+        <button className={`ghost favorite-toggle ${favorited ? "active" : ""}`} type="button" onClick={onToggleFavorite}>
+          {favorited ? "★ В избранном" : "☆ В избранное"}
+        </button>
+      )}
       <div className="date-row">
         <label htmlFor="promise-date">День</label>
         <input id="promise-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />

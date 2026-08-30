@@ -1,4 +1,4 @@
-import type { AuthConfig, City, DaySlots, Place, SlotDetails, UserProfile } from "./types";
+import type { AuthConfig, City, DaySlots, Favorite, Place, SlotDetails, UserProfile } from "./types";
 
 function apiBase(): string {
   const raw = import.meta.env.VITE_API_URL;
@@ -91,4 +91,8 @@ export const api = {
     }),
   cancelPromise: (id: number) => apiFetch<void>(`/api/promises/${id}`, { method: "DELETE" }),
   myPromises: () => apiFetch<Array<{ id: number; locationId: number; date: string; slot: string }>>("/api/promises/mine"),
+  favorites: () => apiFetch<Favorite[]>("/api/favorites"),
+  addFavorite: (locationId: number) =>
+    apiFetch<Favorite>("/api/favorites", { method: "POST", body: JSON.stringify({ locationId }) }),
+  removeFavorite: (locationId: number) => apiFetch<void>(`/api/favorites/${locationId}`, { method: "DELETE" }),
 };

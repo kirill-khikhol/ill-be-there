@@ -4,12 +4,13 @@ import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import markerRetina from "leaflet/dist/images/marker-icon-2x.png";
 import "leaflet/dist/leaflet.css";
 import { useEffect, useMemo, useState } from "react";
-import { MapContainer, Marker, TileLayer, useMapEvents } from "react-leaflet";
+import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import { useSearchParams } from "react-router-dom";
 import { api, loginHref } from "../api";
 import { useAuth } from "../auth";
 import LocationPanel from "../components/LocationPanel";
-import type { City, Place } from "../types";
+import FavoritesPanel from "../components/FavoritesPanel";
+import type { City, Favorite, Place } from "../types";
 
 L.Icon.Default.mergeOptions({
   iconUrl: markerIcon,
@@ -24,11 +25,15 @@ const CITY_FILTERS: Array<{ id: City | "ALL"; label: string; center?: [number, n
   { id: "RAMAT_GAN", label: "Рамат-Ган", center: [32.08, 34.82], zoom: 14 },
 ];
 
-function Recenter({ center, zoom }: { center: [number, number]; zoom: number }) {
-  const map = useMapEvents({});
+function Recenter({ center, zoom, nonce }: { center: [number, number]; zoom: number; nonce: number }) {
+  const map = useMap();
   useEffect(() => {
-    map.setView(center, zoom);
-  }, [center, map, zoom]);
+    if (nonce === 0) {
+      map.setView(center, zoom);
+      return;
+    }
+    map.flyTo(center, zoom, { duration: 0.7 });
+  }, [center, map, nonce, zoom]);
   return null;
 }
 
@@ -61,8 +66,28 @@ export default function MapPage() {
   const [draftName, setDraftName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [favorites, setFavorites] = useState<Favorite[]>([]);
+  const [favoritesOpen, setFavoritesOpen] = useState(false);
+  const [mapFocus, setMapFocus] = useState<{ center: [number, number]; zoom: number; nonce: number }>({
+    center: [32.35, 34.92],
+    zoom: 9,
+    nonce: 0,
+  });
 
   const view = useMemo(() => CITY_FILTERS.find((item) => item.id === city) ?? CITY_FILTERS[0], [city]);
+  const favoriteIds = useMemo(() => new Set(favorites.map((item) => item.location.id)), [favorites]);
+
+  const loadFavorites = async () => {
+    if (!user) {
+      setFavorites([]);
+      return;
+    }
+    try {
+      setFavorites(await api.favorites());
+    } catch {
+      setFavorites([]);
+    }
+  };
 
   const loadPlaces = async (nextCity: City | "ALL") => {
     setLoading(true);
@@ -79,6 +104,10 @@ export default function MapPage() {
   useEffect(() => {
     void loadPlaces(city);
   }, [city]);
+
+  useEffect(() => {
+    void loadFavorites();
+  }, [user]);
 
   const submitPlace = async () => {
     if (!draft || !draftName.trim()) {
@@ -113,7 +142,14 @@ export default function MapPage() {
               key={item.id}
               className={`chip ${city === item.id ? "active" : ""}`}
               type="button"
-              onClick={() => setCity(item.id)}
+              onClick={() => {
+                setCity(item.id);
+                setMapFocus({
+                  center: item.center ?? [32.35, 34.92],
+                  zoom: item.zoom ?? 9,
+                  nonce: Date.now(),
+                });
+              }}
             >
               {item.label}
             </button>
@@ -124,6 +160,19 @@ export default function MapPage() {
             <>
               {user.avatarUrl && <img src={user.avatarUrl} alt="" />}
               <span>{user.name}</span>
+              <button
+                className={`ghost ${favoritesOpen ? "active" : ""}`}
+                type="button"
+                onClick={() => {
+                  if (!user) {
+                    window.location.href = loginHref();
+                    return;
+                  }
+                  setFavoritesOpen((value) => !value);
+                }}
+              >
+                Избранное{favorites.length > 0 ? ` (${favorites.length})` : ""}
+              </button>
               <button className="ghost" type="button" onClick={logout}>
                 Выйти
               </button>
@@ -157,7 +206,7 @@ export default function MapPage() {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          <Recenter center={view.center ?? [32.35, 34.92]} zoom={view.zoom ?? 9} />
+          <Recenter center={mapFocus.center} zoom={mapFocus.zoom} nonce={mapFocus.nonce} />
           <MapClick
             enabled={adding}
             onPick={(lat, lng) => {
@@ -216,7 +265,56 @@ export default function MapPage() {
             )}
           </div>
         )}
-        {selected && <LocationPanel place={selected} onClose={() => setSelected(null)} />}
+        {selected && (
+          <LocationPanel
+            place={selected}
+            onClose={() => setSelected(null)}
+            favorited={favoriteIds.has(selected.id)}
+            onToggleFavorite={() => {
+              void (async () => {
+                try {
+                  if (favoriteIds.has(selected.id)) {
+                    await api.removeFavorite(selected.id);
+                  } else {
+                    await api.addFavorite(selected.id);
+                  }
+                  await loadFavorites();
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : "Не удалось обновить избранное");
+                }
+              })();
+            }}
+            onPromiseCreated={() => void loadFavorites()}
+          />
+        )}
+        <FavoritesPanel
+          open={favoritesOpen}
+          items={favorites}
+          selectedId={selected?.id ?? null}
+          loggedIn={Boolean(user)}
+          onClose={() => setFavoritesOpen(false)}
+          onSelect={(item) => {
+            setSelected(item.location);
+            setMapFocus({
+              center: [item.location.latitude, item.location.longitude],
+              zoom: 16,
+              nonce: Date.now(),
+            });
+          }}
+          onRemove={(locationId) => {
+            void (async () => {
+              try {
+                await api.removeFavorite(locationId);
+                await loadFavorites();
+                if (selected?.id === locationId) {
+                  // keep panel open; star updates via favorites reload
+                }
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "Не удалось убрать из избранного");
+              }
+            })();
+          }}
+        />
       </div>
     </div>
   );

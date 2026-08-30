@@ -34,16 +34,19 @@ public class PromiseService {
 
     private final PromiseRepository promiseRepository;
     private final LocationService locationService;
+    private final FavoriteService favoriteService;
     private final GoogleCalendarService googleCalendarService;
     private final AppProperties properties;
 
     public PromiseService(
             PromiseRepository promiseRepository,
             LocationService locationService,
+            FavoriteService favoriteService,
             GoogleCalendarService googleCalendarService,
             AppProperties properties) {
         this.promiseRepository = promiseRepository;
         this.locationService = locationService;
+        this.favoriteService = favoriteService;
         this.googleCalendarService = googleCalendarService;
         this.properties = properties;
     }
@@ -112,6 +115,7 @@ public class PromiseService {
         promise.setCreatedAt(Instant.now());
         promise.setGoogleEventId(googleCalendarService.createEvent(user, location, slotStart));
         AttendancePromise saved = promiseRepository.save(promise);
+        favoriteService.touchFromPromise(location, user);
         return toResponse(saved);
     }
 

@@ -2,6 +2,15 @@ export type City = "HAIFA" | "TEL_AVIV" | "RAMAT_GAN" | "OTHER";
 export type LocationCategory = "SPORTS_GROUND";
 export type LocationSource = "OSM" | "USER";
 
+export type FavoriteSource = "PROMISE" | "MANUAL";
+
+export const CITY_LABEL: Record<City, string> = {
+  HAIFA: "Хайфа",
+  TEL_AVIV: "Тель-Авив",
+  RAMAT_GAN: "Рамат-Ган",
+  OTHER: "Другое",
+};
+
 export interface Place {
   id: number;
   name: string;
@@ -33,6 +42,14 @@ export interface SlotDetails {
   start: string;
   end: string;
   people: Person[];
+}
+
+export interface Favorite {
+  id: number;
+  location: Place;
+  source: FavoriteSource;
+  createdAt: string;
+  lastActivityAt: string;
 }
 
 export interface UserProfile {
