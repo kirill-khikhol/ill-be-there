@@ -65,7 +65,8 @@ export async function waitForHealth(onAttempt: (n: number) => void): Promise<voi
 }
 
 export function loginHref(): string {
-  return `${API_BASE}/oauth2/authorization/google`;
+  const base = API_BASE || "http://localhost:8080";
+  return `${base}/oauth2/authorization/google`;
 }
 
 export const api = {

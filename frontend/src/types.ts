@@ -44,5 +44,8 @@ export interface UserProfile {
 
 export interface AuthConfig {
   googleEnabled: boolean;
+  hasClientId?: boolean;
+  hasClientSecret?: boolean;
+  clientIdHint?: string;
   loginUrl: string;
 }

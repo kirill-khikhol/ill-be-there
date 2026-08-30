@@ -36,6 +36,11 @@ public class AuthController {
     public Map<String, Object> authConfig() {
         return Map.of(
                 "googleEnabled", properties.isGoogleConfigured(),
+                "hasClientId", properties.getGoogle().getClientId() != null
+                        && !properties.getGoogle().getClientId().isBlank(),
+                "hasClientSecret", properties.getGoogle().getClientSecret() != null
+                        && !properties.getGoogle().getClientSecret().isBlank(),
+                "clientIdHint", properties.googleClientIdHint(),
                 "loginUrl", "/oauth2/authorization/google");
     }
 }

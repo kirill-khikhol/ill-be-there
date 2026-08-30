@@ -57,7 +57,19 @@ public class AppProperties {
     }
 
     public boolean isGoogleConfigured() {
-        return google.getClientId() != null && !google.getClientId().isBlank();
+        return hasText(google.getClientId()) && hasText(google.getClientSecret());
+    }
+
+    public String googleClientIdHint() {
+        String id = google.getClientId();
+        if (!hasText(id) || id.length() < 8) {
+            return "";
+        }
+        return "…" + id.substring(id.length() - 8);
+    }
+
+    private static boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 
     public static class Google {

@@ -11,6 +11,7 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -46,6 +47,12 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                                         Authentication authentication) throws IOException {
         OAuth2User principal = (OAuth2User) authentication.getPrincipal();
         String sub = principal.getAttribute("sub");
+        if (sub == null && principal instanceof OidcUser oidcUser) {
+            sub = oidcUser.getSubject();
+        }
+        if (sub == null || sub.isBlank()) {
+            throw new IllegalStateException("Google не вернул идентификатор пользователя");
+        }
         String email = principal.getAttribute("email");
         String name = principal.getAttribute("name");
         String picture = principal.getAttribute("picture");

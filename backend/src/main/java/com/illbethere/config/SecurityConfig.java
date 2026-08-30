@@ -1,6 +1,7 @@
 package com.illbethere.config;
 
 import com.illbethere.security.JwtAuthFilter;
+import com.illbethere.security.OAuth2LoginFailureHandler;
 import com.illbethere.security.OAuth2LoginSuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,14 +27,17 @@ public class SecurityConfig {
     private final AppProperties properties;
     private final JwtAuthFilter jwtAuthFilter;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
 
     public SecurityConfig(
             AppProperties properties,
             JwtAuthFilter jwtAuthFilter,
-            OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler) {
+            OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler,
+            OAuth2LoginFailureHandler oAuth2LoginFailureHandler) {
         this.properties = properties;
         this.jwtAuthFilter = jwtAuthFilter;
         this.oAuth2LoginSuccessHandler = oAuth2LoginSuccessHandler;
+        this.oAuth2LoginFailureHandler = oAuth2LoginFailureHandler;
     }
 
     @Bean
@@ -58,7 +62,8 @@ public class SecurityConfig {
             http.oauth2Login(oauth -> oauth
                     .authorizationEndpoint(endpoint -> endpoint
                             .authorizationRequestResolver(authorizationRequestResolver(clientRegistrationRepository)))
-                    .successHandler(oAuth2LoginSuccessHandler));
+                    .successHandler(oAuth2LoginSuccessHandler)
+                    .failureHandler(oAuth2LoginFailureHandler));
         }
 
         return http.build();

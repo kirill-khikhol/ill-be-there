@@ -44,7 +44,28 @@ curl -X POST http://localhost:8080/api/admin/osm/import -H "X-Import-Token: dev-
 4. OAuth Client ID типа Web:
    - Authorized JavaScript origins: `http://localhost:5173`, URL фронта на Render
    - Authorized redirect URIs: `http://localhost:8080/login/oauth2/code/google` и `https://<api>.onrender.com/login/oauth2/code/google`
-5. Скопируйте Client ID и Secret в переменные окружения (см. `.env.example`).
+5. Скопируйте Client ID и Secret в `backend/.env` (файл не коммитится):
+
+```
+GOOGLE_CLIENT_ID=....apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=....
+```
+
+Перезапустите бэкенд из папки `backend` (чтобы подтянуть свежий код). В самом начале лога должно быть:
+
+`I'll Be There: loaded ...\backend\.env (GOOGLE_CLIENT_ID=true, GOOGLE_CLIENT_SECRET=true)`
+
+затем `Google OAuth enabled, clientId ends with …xxxxxxxx`.
+
+Если видите `no .env file found` — процесс запущен из другой папки; положите `.env` в `backend/` или задайте переменные в Run Configuration IDE.
+
+Проверка, что ключи дошли до процесса (секреты не печатаются):
+
+```bash
+curl http://localhost:8080/api/auth/config
+```
+
+Ожидается `"googleEnabled": true` и `clientIdHint` с хвостом вашего Client ID. Если `false` — приложение не видит переменные: ключи должны быть в `backend/.env` или в env процесса Java, не только в Google Console.
 
 При входе запрашивается scope `calendar.events`. Если Google не отдал refresh token, обещание в приложении всё равно создаётся.
 

@@ -5,6 +5,7 @@ import markerRetina from "leaflet/dist/images/marker-icon-2x.png";
 import "leaflet/dist/leaflet.css";
 import { useEffect, useMemo, useState } from "react";
 import { MapContainer, Marker, TileLayer, useMapEvents } from "react-leaflet";
+import { useSearchParams } from "react-router-dom";
 import { api, loginHref } from "../api";
 import { useAuth } from "../auth";
 import LocationPanel from "../components/LocationPanel";
@@ -50,6 +51,8 @@ function MapClick({
 
 export default function MapPage() {
   const { user, googleEnabled, logout } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const oauthError = searchParams.get("oauthError");
   const [city, setCity] = useState<City | "ALL">("ALL");
   const [places, setPlaces] = useState<Place[]>([]);
   const [selected, setSelected] = useState<Place | null>(null);
@@ -172,6 +175,21 @@ export default function MapPage() {
         </MapContainer>
         {loading && (
           <div className="add-banner">Загружаем площадки из OpenStreetMap. Первый раз это может занять минуту.</div>
+        )}
+        {oauthError && (
+          <div className="add-banner">
+            <span className="error">Google OAuth: {oauthError}</span>
+            <button
+              className="ghost"
+              type="button"
+              onClick={() => {
+                searchParams.delete("oauthError");
+                setSearchParams(searchParams, { replace: true });
+              }}
+            >
+              Закрыть
+            </button>
+          </div>
         )}
         {error && !loading && <div className="add-banner">{error}</div>}
         {adding && (

@@ -20,13 +20,13 @@ services:
       context: ./backend
     ports:
       - "8080:8080"
+    env_file:
+      - ./backend/.env
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/illbethere
       SPRING_DATASOURCE_USERNAME: illbethere
       SPRING_DATASOURCE_PASSWORD: illbethere
       FRONTEND_ORIGIN: http://localhost:5173
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       JWT_SECRET: ${JWT_SECRET:-local-dev-jwt-secret-please-change-32}
       TOKEN_ENCRYPT_KEY: ${TOKEN_ENCRYPT_KEY:-local-dev-token-key-32chars}
       OSM_IMPORT_TOKEN: ${OSM_IMPORT_TOKEN:-dev-import}
