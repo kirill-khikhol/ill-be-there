@@ -1,6 +1,7 @@
 package com.illbethere;
 
 import com.illbethere.config.AppProperties;
+import com.illbethere.config.DatabaseUrlProcessor;
 import com.illbethere.config.DotEnv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -22,6 +23,7 @@ public class IllBeThereApplication {
         } else {
             System.out.println("I'll Be There: no .env file found from " + System.getProperty("user.dir"));
         }
+        DatabaseUrlProcessor.applyToSystemProperties();
         SpringApplication.run(IllBeThereApplication.class, args);
     }
 }
