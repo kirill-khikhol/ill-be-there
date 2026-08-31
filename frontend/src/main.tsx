@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { AuthProvider } from "./auth";
 import WakeGate from "./components/WakeGate";
+import { I18nProvider } from "./i18n";
 import "./index.css";
 
 const basename =
@@ -11,12 +12,14 @@ const basename =
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <BrowserRouter basename={basename}>
-      <WakeGate>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </WakeGate>
-    </BrowserRouter>
+    <I18nProvider>
+      <BrowserRouter basename={basename}>
+        <WakeGate>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </WakeGate>
+      </BrowserRouter>
+    </I18nProvider>
   </React.StrictMode>
 );

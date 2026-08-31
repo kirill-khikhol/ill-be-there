@@ -31,7 +31,7 @@ public class ApiExceptionHandler {
         String message = ex.getBindingResult().getFieldErrors().stream()
                 .findFirst()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                .orElse("Некорректные данные");
+                .orElse("invalid_data");
         return ResponseEntity.badRequest().body(Map.of("error", message));
     }
 }

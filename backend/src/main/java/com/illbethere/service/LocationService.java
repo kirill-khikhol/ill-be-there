@@ -35,7 +35,7 @@ public class LocationService {
 
     public Location get(Long id) {
         return locationRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Локация не найдена"));
+                .orElseThrow(() -> new IllegalArgumentException("location_not_found"));
     }
 
     @Transactional

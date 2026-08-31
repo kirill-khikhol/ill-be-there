@@ -4,13 +4,6 @@ export type LocationSource = "OSM" | "USER";
 
 export type FavoriteSource = "PROMISE" | "MANUAL";
 
-export const CITY_LABEL: Record<City, string> = {
-  HAIFA: "Хайфа",
-  TEL_AVIV: "Тель-Авив",
-  RAMAT_GAN: "Рамат-Ган",
-  OTHER: "Другое",
-};
-
 export interface Place {
   id: number;
   name: string;

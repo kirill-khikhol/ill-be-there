@@ -94,7 +94,7 @@ public class PromiseService {
                 locationId, slotStart, slotEnd, PromiseStatus.ACTIVE);
         List<PersonResponse> people = promises.stream()
                 .map(p -> new PersonResponse(
-                        p.getUser().getName() != null ? p.getUser().getName() : "Пользователь",
+                        p.getUser().getName() != null ? p.getUser().getName() : "User",
                         p.getUser().getAvatarUrl()))
                 .toList();
         LocalTime start = LocalTime.parse(slot);
@@ -106,12 +106,12 @@ public class PromiseService {
         Location location = locationService.get(request.locationId());
         Instant slotStart = parseSlot(request.date(), request.slot());
         if (slotStart.isBefore(Instant.now())) {
-            throw new IllegalArgumentException("Нельзя записаться на слот в прошлом");
+            throw new IllegalArgumentException("slot_in_past");
         }
         promiseRepository.findByUserIdAndLocationIdAndSlotStartAndStatus(
                         user.getId(), location.getId(), slotStart, PromiseStatus.ACTIVE)
                 .ifPresent(existing -> {
-                    throw new IllegalStateException("Вы уже обещали прийти в этот слот");
+                    throw new IllegalStateException("already_promised");
                 });
 
         AttendancePromise promise = new AttendancePromise();
@@ -130,9 +130,9 @@ public class PromiseService {
     @Transactional
     public void cancel(Long promiseId, AppUser user) {
         AttendancePromise promise = promiseRepository.findById(promiseId)
-                .orElseThrow(() -> new IllegalArgumentException("Обещание не найдено"));
+                .orElseThrow(() -> new IllegalArgumentException("promise_not_found"));
         if (!promise.getUser().getId().equals(user.getId())) {
-            throw new IllegalArgumentException("Можно отменить только своё обещание");
+            throw new IllegalArgumentException("not_own_promise");
         }
         if (promise.getStatus() == PromiseStatus.CANCELLED) {
             return;
@@ -172,7 +172,7 @@ public class PromiseService {
         LocalDate day = LocalDate.parse(date);
         LocalTime time = LocalTime.parse(slot);
         if (time.getMinute() % 30 != 0 || time.getSecond() != 0) {
-            throw new IllegalArgumentException("Слот должен начинаться на 00 или 30 минут");
+            throw new IllegalArgumentException("invalid_slot");
         }
         return day.atTime(time).atZone(zone()).toInstant();
     }

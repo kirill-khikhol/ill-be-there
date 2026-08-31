@@ -60,7 +60,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             sub = oidcUser.getSubject();
         }
         if (sub == null || sub.isBlank()) {
-            throw new IllegalStateException("Google не вернул идентификатор пользователя");
+            throw new IllegalStateException("google_missing_subject");
         }
         String email = principal.getAttribute("email");
         String name = principal.getAttribute("name");

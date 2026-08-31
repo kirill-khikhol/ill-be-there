@@ -43,7 +43,7 @@ public class FavoriteService {
     @Transactional
     public void remove(Long locationId, AppUser user) {
         if (!favoriteRepository.existsByUserIdAndLocationId(user.getId(), locationId)) {
-            throw new IllegalArgumentException("Точки нет в избранном");
+            throw new IllegalArgumentException("not_in_favorites");
         }
         favoriteRepository.deleteByUserIdAndLocationId(user.getId(), locationId);
     }

@@ -25,7 +25,7 @@ public class OsmImportController {
     public OsmImportService.ImportResult importAll(
             @RequestHeader(value = "X-Import-Token", required = false) String token) {
         if (token == null || !token.equals(properties.getOsmImportToken())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Неверный токен импорта");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "invalid_import_token");
         }
         return osmImportService.importAll();
     }

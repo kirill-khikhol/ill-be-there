@@ -1,6 +1,6 @@
 import { loginHref } from "../api";
+import { useI18n } from "../i18n";
 import type { Favorite } from "../types";
-import { CITY_LABEL } from "../types";
 
 export default function FavoritesPanel({
   open,
@@ -19,6 +19,8 @@ export default function FavoritesPanel({
   onRemove: (locationId: number) => void;
   onClose: () => void;
 }) {
+  const { t, cityLabel } = useI18n();
+
   if (!open) {
     return null;
   }
@@ -26,19 +28,18 @@ export default function FavoritesPanel({
   return (
     <aside className="panel favorites-panel">
       <div className="row">
-        <h2>Избранное</h2>
+        <h2>{t("favorites")}</h2>
         <button className="ghost" type="button" onClick={onClose}>
-          Закрыть
+          {t("close")}
         </button>
       </div>
       {!loggedIn && (
         <p className="hint">
-          <a href={loginHref()}>Войдите</a>, чтобы сохранять площадки.
+          <a href={loginHref()}>{t("signIn")}</a>
+          {t("favoritesLoginRest")}
         </p>
       )}
-      {loggedIn && items.length === 0 && (
-        <p className="hint">Пока пусто. Нажмите «В избранное» на точке или запишитесь на слот — площадка появится здесь.</p>
-      )}
+      {loggedIn && items.length === 0 && <p className="hint">{t("favoritesEmpty")}</p>}
       <div className="favorite-list">
         {items.map((item) => (
           <div
@@ -48,15 +49,15 @@ export default function FavoritesPanel({
             <button className="favorite-main" type="button" onClick={() => onSelect(item)}>
               <strong>{item.location.name}</strong>
               <span className="meta">
-                {CITY_LABEL[item.location.city]}
-                {item.source === "PROMISE" ? " · вы записывались" : " · вручную"}
+                {cityLabel(item.location.city)}
+                {item.source === "PROMISE" ? ` · ${t("favoritedViaPromise")}` : ` · ${t("favoritedManual")}`}
               </span>
             </button>
             <button
               className="ghost"
               type="button"
               onClick={() => onRemove(item.location.id)}
-              aria-label="Убрать из избранного"
+              aria-label={t("removeFavorite")}
             >
               ×
             </button>

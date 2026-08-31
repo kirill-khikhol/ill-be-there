@@ -10,6 +10,8 @@ import { api, loginHref } from "../api";
 import { useAuth } from "../auth";
 import LocationPanel from "../components/LocationPanel";
 import FavoritesPanel from "../components/FavoritesPanel";
+import LangSwitch from "../components/LangSwitch";
+import { useI18n } from "../i18n";
 import type { City, Favorite, Place } from "../types";
 
 L.Icon.Default.mergeOptions({
@@ -18,11 +20,11 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
-const CITY_FILTERS: Array<{ id: City | "ALL"; label: string; center?: [number, number]; zoom?: number }> = [
-  { id: "ALL", label: "Все", center: [32.35, 34.92], zoom: 9 },
-  { id: "HAIFA", label: "Хайфа", center: [32.81, 35.0], zoom: 13 },
-  { id: "TEL_AVIV", label: "Тель-Авив", center: [32.08, 34.78], zoom: 13 },
-  { id: "RAMAT_GAN", label: "Рамат-Ган", center: [32.08, 34.82], zoom: 14 },
+const CITY_FILTERS: Array<{ id: City | "ALL"; center?: [number, number]; zoom?: number }> = [
+  { id: "ALL", center: [32.35, 34.92], zoom: 9 },
+  { id: "HAIFA", center: [32.81, 35.0], zoom: 13 },
+  { id: "TEL_AVIV", center: [32.08, 34.78], zoom: 13 },
+  { id: "RAMAT_GAN", center: [32.08, 34.82], zoom: 14 },
 ];
 
 function Recenter({ center, zoom, nonce }: { center: [number, number]; zoom: number; nonce: number }) {
@@ -56,6 +58,7 @@ function MapClick({
 
 export default function MapPage() {
   const { user, googleEnabled, logout } = useAuth();
+  const { t, cityLabel, translateError } = useI18n();
   const [searchParams, setSearchParams] = useSearchParams();
   const oauthError = searchParams.get("oauthError");
   const [city, setCity] = useState<City | "ALL">("ALL");
@@ -95,7 +98,7 @@ export default function MapPage() {
     try {
       setPlaces(await api.locations(nextCity));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось загрузить точки");
+      setError(err instanceof Error ? err.message : "errorLoadPlaces");
     } finally {
       setLoading(false);
     }
@@ -125,16 +128,19 @@ export default function MapPage() {
       setDraft(null);
       setDraftName("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось добавить точку");
+      setError(err instanceof Error ? err.message : "errorAddPlace");
     }
   };
 
   return (
     <div className="app">
       <header className="topbar">
-        <div className="brand">
-          <strong>I'll Be There</strong>
-          <span>Обещай прийти — остальные увидят</span>
+        <div className="brand-row">
+          <div className="brand">
+            <strong>I'll Be There</strong>
+            <span>{t("tagline")}</span>
+          </div>
+          <LangSwitch compact />
         </div>
         <div className="filters">
           {CITY_FILTERS.map((item) => (
@@ -151,7 +157,7 @@ export default function MapPage() {
                 });
               }}
             >
-              {item.label}
+              {item.id === "ALL" ? t("cityAll") : cityLabel(item.id)}
             </button>
           ))}
         </div>
@@ -171,18 +177,19 @@ export default function MapPage() {
                   setFavoritesOpen((value) => !value);
                 }}
               >
-                Избранное{favorites.length > 0 ? ` (${favorites.length})` : ""}
+                {t("favorites")}
+                {favorites.length > 0 ? ` (${favorites.length})` : ""}
               </button>
               <button className="ghost" type="button" onClick={logout}>
-                Выйти
+                {t("logOut")}
               </button>
             </>
           ) : googleEnabled ? (
             <a className="btn" href={loginHref()}>
-              Войти через Google
+              {t("signInGoogle")}
             </a>
           ) : (
-            <span className="hint">Google OAuth не настроен</span>
+            <span className="hint">{t("googleNotConfigured")}</span>
           )}
           <button
             className="ghost"
@@ -196,7 +203,7 @@ export default function MapPage() {
               setDraft(null);
             }}
           >
-            {adding ? "Отмена" : "Добавить точку"}
+            {adding ? t("cancel") : t("addPin")}
           </button>
         </div>
       </header>
@@ -222,12 +229,12 @@ export default function MapPage() {
           ))}
           {draft && <Marker position={[draft.lat, draft.lng]} />}
         </MapContainer>
-        {loading && (
-          <div className="add-banner">Загружаем площадки из OpenStreetMap. Первый раз это может занять минуту.</div>
-        )}
+        {loading && <div className="add-banner">{t("loadingOsm")}</div>}
         {oauthError && (
           <div className="add-banner">
-            <span className="error">Google OAuth: {oauthError}</span>
+            <span className="error">
+              {t("oauthPrefix", { detail: translateError(oauthError, "errorGeneric") })}
+            </span>
             <button
               className="ghost"
               type="button"
@@ -236,11 +243,11 @@ export default function MapPage() {
                 setSearchParams(searchParams, { replace: true });
               }}
             >
-              Закрыть
+              {t("close")}
             </button>
           </div>
         )}
-        {error && !loading && <div className="add-banner">{error}</div>}
+        {error && !loading && <div className="add-banner">{translateError(error, "errorLoadPlaces")}</div>}
         {adding && (
           <div className="add-banner">
             {draft ? (
@@ -253,15 +260,15 @@ export default function MapPage() {
                 <input
                   value={draftName}
                   onChange={(e) => setDraftName(e.target.value)}
-                  placeholder="Название площадки"
+                  placeholder={t("placeNamePlaceholder")}
                   required
                 />
                 <button className="btn" type="submit">
-                  Сохранить
+                  {t("save")}
                 </button>
               </form>
             ) : (
-              "Кликните по карте, чтобы поставить точку"
+              t("clickMap")
             )}
           </div>
         )}
@@ -280,7 +287,7 @@ export default function MapPage() {
                   }
                   await loadFavorites();
                 } catch (err) {
-                  setError(err instanceof Error ? err.message : "Не удалось обновить избранное");
+                  setError(err instanceof Error ? err.message : "errorUpdateFavorite");
                 }
               })();
             }}
@@ -310,7 +317,7 @@ export default function MapPage() {
                   // keep panel open; star updates via favorites reload
                 }
               } catch (err) {
-                setError(err instanceof Error ? err.message : "Не удалось убрать из избранного");
+                setError(err instanceof Error ? err.message : "errorRemoveFavorite");
               }
             })();
           }}

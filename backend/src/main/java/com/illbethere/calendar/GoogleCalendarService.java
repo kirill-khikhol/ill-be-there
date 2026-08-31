@@ -48,17 +48,17 @@ public class GoogleCalendarService {
 
     public WriteResult createEvent(AppUser user, Location location, Instant slotStart) {
         if (!properties.isGoogleConfigured()) {
-            return WriteResult.fail("Google OAuth не настроен на сервере.");
+            return WriteResult.fail("google_not_configured");
         }
         if (!user.hasCalendarToken()) {
-            return WriteResult.fail("Нет доступа к Google Calendar. Выйдите и войдите снова, разрешив календарь.");
+            return WriteResult.fail("no_calendar_access");
         }
         try {
             Calendar calendar = client(user);
             TimeZone tz = TimeZone.getTimeZone(ZoneId.of(properties.getTimezone()));
             Event event = new Event()
                     .setSummary("I'll Be There: " + location.getName())
-                    .setDescription("Обещание прийти на площадку в I'll Be There")
+                    .setDescription("Promise to show up at this pitch in I'll Be There")
                     .setLocation(location.getLatitude() + ", " + location.getLongitude());
             event.setStart(new EventDateTime()
                     .setDateTime(new DateTime(Date.from(slotStart), tz))
@@ -74,9 +74,9 @@ public class GoogleCalendarService {
             String message = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
             if (message.contains("accessNotConfigured") || message.contains("has not been used")
                     || message.contains("Calendar API")) {
-                return WriteResult.fail("В Google Cloud не включён Calendar API для этого проекта.");
+                return WriteResult.fail("calendar_api_disabled");
             }
-            return WriteResult.fail("Google Calendar: " + message);
+            return WriteResult.fail("calendar_error:" + message);
         }
     }
 

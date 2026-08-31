@@ -41,7 +41,7 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   const text = await response.text();
   const data = text ? JSON.parse(text) : null;
   if (!response.ok) {
-    const message = data && data.error ? data.error : `Ошибка ${response.status}`;
+    const message = data && data.error ? data.error : `HTTP_${response.status}`;
     throw new Error(message);
   }
   return data as T;
@@ -61,7 +61,7 @@ export async function waitForHealth(onAttempt: (n: number) => void): Promise<voi
     }
     await new Promise((resolve) => setTimeout(resolve, 3000));
   }
-  throw new Error("Сервер не проснулся. Обновите страницу через минуту.");
+  throw new Error("WAKE_TIMEOUT");
 }
 
 export function loginHref(): string {

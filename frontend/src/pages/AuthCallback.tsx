@@ -1,10 +1,12 @@
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { setToken } from "../api";
+import { useI18n } from "../i18n";
 
 export default function AuthCallback() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   useEffect(() => {
     const token = params.get("token");
@@ -17,7 +19,7 @@ export default function AuthCallback() {
   return (
     <div className="wake">
       <div className="wake-card">
-        <h1>Входим…</h1>
+        <h1>{t("signingIn")}</h1>
       </div>
     </div>
   );

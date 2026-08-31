@@ -23,6 +23,10 @@ body,
   height: 100%;
 }
 
+html[lang="he"] {
+  font-family: "Assistant", "DM Sans", system-ui, sans-serif;
+}
+
 body {
   background: var(--bg);
   color: var(--ink);
@@ -48,6 +52,12 @@ input {
   background: var(--card);
   border-bottom: 1px solid var(--line);
   z-index: 500;
+}
+
+.brand-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .brand {
@@ -107,6 +117,19 @@ a.btn {
 
 .ghost {
   background: transparent;
+}
+
+.lang-switch {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.lang-switch.compact .chip {
+  padding: 6px 8px;
+  min-width: 36px;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .userbox {
@@ -290,6 +313,48 @@ a.btn {
   margin: 0 0 8px;
 }
 
+.wake-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.wake-head h1 {
+  margin: 0;
+}
+
+.map-wrap,
+.leaflet-container {
+  direction: ltr;
+}
+
+html[dir="rtl"] .panel,
+html[dir="rtl"] .add-banner,
+html[dir="rtl"] .topbar,
+html[dir="rtl"] .wake-card {
+  direction: rtl;
+}
+
+html[dir="rtl"] .panel {
+  right: auto;
+  left: 16px;
+}
+
+html[dir="rtl"] .favorites-panel {
+  left: auto;
+  right: 16px;
+}
+
+html[dir="rtl"] .favorite-main {
+  text-align: right;
+}
+
+html[dir="rtl"] .slot {
+  text-align: right;
+}
+
 .hint {
   color: var(--muted);
 }
@@ -329,5 +394,11 @@ a.btn {
 
   .favorites-panel {
     max-height: 45%;
+  }
+
+  html[dir="rtl"] .panel,
+  html[dir="rtl"] .favorites-panel {
+    left: 0;
+    right: 0;
   }
 }

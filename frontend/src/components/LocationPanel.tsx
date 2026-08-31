@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, loginHref } from "../api";
 import { useAuth } from "../auth";
+import { useI18n } from "../i18n";
 import type { DaySlots, Place, SlotDetails } from "../types";
-import { CITY_LABEL } from "../types";
 
 function todayInIsrael(): string {
   return new Intl.DateTimeFormat("en-CA", {
@@ -27,6 +27,7 @@ export default function LocationPanel({
   onPromiseCreated?: () => void;
 }) {
   const { user, googleEnabled } = useAuth();
+  const { t, cityLabel, promisedLabel, translateError } = useI18n();
   const [date, setDate] = useState(todayInIsrael);
   const [day, setDay] = useState<DaySlots | null>(null);
   const [openSlot, setOpenSlot] = useState<string | null>(null);
@@ -92,7 +93,7 @@ export default function LocationPanel({
         setError(created.calendarWarning);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось обещать");
+      setError(err instanceof Error ? err.message : "errorPromise");
     } finally {
       setBusy(false);
     }
@@ -111,7 +112,7 @@ export default function LocationPanel({
         setDetails(await api.slotDetails(place.id, date, slot));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось отменить");
+      setError(err instanceof Error ? err.message : "errorCancel");
     } finally {
       setBusy(false);
     }
@@ -123,26 +124,26 @@ export default function LocationPanel({
         <div>
           <h2>{place.name}</h2>
           <div className="meta">
-            {CITY_LABEL[place.city]} · спортплощадка
-            {place.source === "USER" ? " · добавлена пользователем" : ""}
+            {cityLabel(place.city)} · {t("sportsGround")}
+            {place.source === "USER" ? ` · ${t("addedByUser")}` : ""}
           </div>
         </div>
         <button className="ghost" onClick={onClose} type="button">
-          Закрыть
+          {t("close")}
         </button>
       </div>
       {user && (
         <button className={`ghost favorite-toggle ${favorited ? "active" : ""}`} type="button" onClick={onToggleFavorite}>
-          {favorited ? "★ В избранном" : "☆ В избранное"}
+          {favorited ? t("inFavorites") : t("addToFavorites")}
         </button>
       )}
       <div className="date-row">
-        <label htmlFor="promise-date">День</label>
+        <label htmlFor="promise-date">{t("day")}</label>
         <input id="promise-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
       </div>
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error">{translateError(error)}</p>}
       {day && visibleSlots.length === 0 && (
-        <p className="hint">На этот день уже нет слотов после текущего времени.</p>
+        <p className="hint">{t("noSlotsLeft")}</p>
       )}
       <div className="slots">
         {visibleSlots.map((slot) => (
@@ -155,7 +156,7 @@ export default function LocationPanel({
             <strong>
               {slot.start}–{slot.end}
             </strong>
-            <span>{slot.count === 0 ? "пока никого" : `${slot.count} обещали прийти`}</span>
+            <span>{promisedLabel(slot.count)}</span>
             {myIds[slot.start] ? (
               <span
                 className="ghost"
@@ -164,7 +165,7 @@ export default function LocationPanel({
                   void cancel(slot.start);
                 }}
               >
-                Отменить
+                {t("cancel")}
               </span>
             ) : (
               <span
@@ -174,12 +175,12 @@ export default function LocationPanel({
                   void promise(slot.start);
                 }}
               >
-                {user ? "Я буду" : "Войти и обещать"}
+                {user ? t("iWillBe") : t("signInAndPromise")}
               </span>
             )}
             {openSlot === slot.start && details && (
               <div className="people">
-                {details.people.length === 0 && <span className="hint">Список пуст</span>}
+                {details.people.length === 0 && <span className="hint">{t("emptyList")}</span>}
                 {details.people.map((person, index) => (
                   <div className="person" key={`${person.name}-${index}`}>
                     {person.avatarUrl ? (
@@ -196,15 +197,15 @@ export default function LocationPanel({
         ))}
       </div>
       {!user && googleEnabled && (
-        <p className="hint">Чтобы обещание попало в Google Calendar, войдите через Google.</p>
+        <p className="hint">{t("calendarHint")}</p>
       )}
       {user && user.hasCalendarAccess === false && (
         <p className="hint">
-          Нет доступа к календарю.{" "}
-          <a href={loginHref()}>Войдите снова</a> и разрешите Google Calendar.
+          {t("noCalendarAccessLead")}{" "}
+          <a href={loginHref()}>{t("signInAgain")}</a> {t("noCalendarAccessTail")}
         </p>
       )}
-      {busy && <p className="hint">Сохраняем…</p>}
+      {busy && <p className="hint">{t("saving")}</p>}
     </aside>
   );
 }

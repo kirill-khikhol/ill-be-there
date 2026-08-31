@@ -20,7 +20,7 @@ public final class CurrentUser {
     public static AppUser require() {
         AppUser user = optional();
         if (user == null) {
-            throw new UnauthorizedException("Нужна авторизация");
+            throw new UnauthorizedException("unauthorized");
         }
         return user;
     }
