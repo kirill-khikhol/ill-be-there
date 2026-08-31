@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { waitForHealth } from "../api";
+import { API_BASE, waitForHealth } from "../api";
 
 export default function WakeGate({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
@@ -7,6 +7,10 @@ export default function WakeGate({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!API_BASE) {
+      setReady(true);
+      return;
+    }
     let cancelled = false;
     waitForHealth((n) => {
       if (!cancelled) {

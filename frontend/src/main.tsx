@@ -6,9 +6,12 @@ import { AuthProvider } from "./auth";
 import WakeGate from "./components/WakeGate";
 import "./index.css";
 
+const basename =
+  import.meta.env.BASE_URL === "/" ? undefined : import.meta.env.BASE_URL.replace(/\/$/, "");
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <WakeGate>
         <AuthProvider>
           <App />

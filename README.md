@@ -70,6 +70,16 @@ Expect `"googleEnabled": true` and `clientIdHint` matching the tail of your Clie
 
 Login requests the `calendar.events` scope. If Google does not return a refresh token, the promise is still created in the app. After changing calendar scopes, users must log out and log in again.
 
+## Frontend on GitHub Pages
+
+The frontend deploys from GitHub Actions on every push to `master` that touches `frontend/`.
+
+URL: https://kirill-khikhol.github.io/ill-be-there/
+
+First-time setup (once): repo **Settings → Pages → Source: GitHub Actions**. After that, **Actions → Deploy frontend → Run workflow** if you need a manual deploy.
+
+Until the API is live, the map still opens (tiles work; location data will fail until `VITE_API_URL` is set). After the backend is on Render, add a repository variable `VITE_API_URL` (the API origin) and re-run the workflow.
+
 ## Free GitHub deploy (Render)
 
 1. Push the repository to GitHub.
