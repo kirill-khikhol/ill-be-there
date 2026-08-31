@@ -26,6 +26,7 @@ management:
 
 app:
   frontend-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
+  frontend-base-path: ${FRONTEND_BASE_PATH:}
   jwt-secret: ${JWT_SECRET:dev-only-change-me-use-at-least-32-chars!!}
   token-encrypt-key: ${TOKEN_ENCRYPT_KEY:dev-only-token-key-32-chars!!}
   osm-import-token: ${OSM_IMPORT_TOKEN:dev-import}

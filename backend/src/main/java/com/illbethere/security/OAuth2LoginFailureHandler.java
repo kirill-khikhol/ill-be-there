@@ -29,7 +29,7 @@ public class OAuth2LoginFailureHandler implements AuthenticationFailureHandler {
                                         AuthenticationException exception) throws IOException {
         log.error("Google OAuth failed: {}", exception.getMessage(), exception);
         String message = exception.getMessage() != null ? exception.getMessage() : "oauth-failed";
-        String target = properties.getFrontendOrigin() + "/?oauthError="
+        String target = properties.frontendAppUrl() + "/?oauthError="
                 + URLEncoder.encode(message, StandardCharsets.UTF_8);
         response.sendRedirect(target);
     }

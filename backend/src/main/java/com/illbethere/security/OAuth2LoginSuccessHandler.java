@@ -93,7 +93,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         userRepository.save(user);
         String jwt = jwtService.createToken(user);
-        String target = properties.getFrontendOrigin() + "/auth/callback?token="
+        String target = properties.frontendAppUrl() + "/auth/callback?token="
                 + URLEncoder.encode(jwt, StandardCharsets.UTF_8);
         response.sendRedirect(target);
     }
