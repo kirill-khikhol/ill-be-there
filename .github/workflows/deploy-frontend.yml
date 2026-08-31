@@ -1,5 +1,7 @@
 name: Deploy frontend
 
+# Repo Settings → Pages → Source: GitHub Actions (required once; Actions cannot create the site).
+
 on:
   push:
     branches: [master]
